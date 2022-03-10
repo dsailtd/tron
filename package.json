@@ -1,0 +1,39 @@
+{
+  "name": "@dsai/tron",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "ts-node test/",
+    "build:commonjs": "rimraf lib && tsc --target es5 --outDir lib --module commonjs --declaration",
+    "build:es": "rimraf es && tsc --target es6 --outDir es --module es6",
+    "build": "npm run build:commonjs && npm run build:es",
+    "ts": "ts-node src/",
+    "prepublishOnly": "npm run build"
+  },
+  "author": "Adam Walker",
+  "license": "MIT",
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.2"
+  },
+  "files": [
+    "es",
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://https://github.com/dsailtd/tron"
+  },
+  "types": "./lib/index.d.ts",
+  "jsnext:main": "./es/index.js",
+  "module": "./es/index.js",
+  "dependencies": {
+    "axios": "^0.26.1",
+    "bip32": "3.0.1",
+    "bip39": "3.0.4",
+    "tiny-secp256k1": "2.2.1",
+    "tronweb": "4.1.0"
+  }
+}
