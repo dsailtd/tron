@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "ES2018",
     "lib": [
-      "es6"
+      "es2018"
     ],
     "alwaysStrict": true,
     "strictNullChecks": true,

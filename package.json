@@ -1,6 +1,6 @@
 {
   "name": "@dsai/tron",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://https://github.com/dsailtd/tron"
+    "url": "https://github.com/dsailtd/tron"
   },
   "types": "./lib/index.d.ts",
   "jsnext:main": "./es/index.js",
