@@ -56,11 +56,11 @@ export class Tron extends EventEmitter {
   /**
    * Tron web object, Used for managing keys and transactions
    *
-   * @private
+   * @public
    * @type {tronweb}
    * @memberof Tron
    */
-  private tronWeb: tronweb;
+  public tronWeb: tronweb;
 
   /**
    * Transaction fetching uses this to filter
