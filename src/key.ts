@@ -108,7 +108,7 @@ export class Key {
   private keys: TronKeyCache = {};
   //private tronWeb: tronweb;
 
-  constructor(private mnemonic: string, private tronWeb: tronweb) {
+  constructor(private mnemonic: string, public tronWeb: tronweb) {
     // Check Length
     if (mnemonic.split(" ").length !== 12) {
       throw new Error("Phrase not 12 words long");
