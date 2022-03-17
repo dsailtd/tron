@@ -22,7 +22,7 @@ tron.on("transactions", (transaction: Transaction) => {
       if (transaction.address === addressCheck[100]) {
         first = false;
         if (
-          transaction.transactions[0].txID ===
+          transaction.transactions.trx[0].txID ===
           "6ec098928ca3be8a4cfac821e59c184e3fa7ab128d86e7d988281a8e1dd3e3e0"
         ) {
           console.log("First Polled transaction is correct");

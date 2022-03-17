@@ -43,6 +43,23 @@ export interface Tronsaction {
   ret?: TronRet[];
 }
 
+export interface Trc20saction {
+  transaction_id: string;
+  block_timestamp: number;
+  from: string;
+  to: string;
+  token_info: Trc20TokenInfo;
+  type: "Transfer";
+  value: string;
+}
+
+interface Trc20TokenInfo  {
+  address: string;
+  decimals: number;
+  name: string;
+  symbol: string;
+}
+
 interface TronRawData {
   contract: TronContract[];
   expiration: number;
@@ -270,8 +287,6 @@ export class Key {
           },
         ]
       )) as Tronsaction;
-
-    console.log("sss");
 
     // Sign
     const signedTransaction = await this.getHDSignature(from, transaction);

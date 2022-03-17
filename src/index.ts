@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import axios from "axios";
-import { Key, entityId, Tronsaction } from "./key";
+import { Key, entityId, Tronsaction, Trc20saction } from "./key";
 //@ts-ignore
 import * as tronweb from "tronweb";
 
@@ -12,7 +12,10 @@ const BACKDATED_POLL = 3;
 
 export interface Transaction {
   address: string;
-  transactions: Tronsaction[];
+  transactions: {
+    trx: Tronsaction[];
+    trc20: Trc20saction[];
+  };
   balance: null | AccountBalance;
 }
 
@@ -133,6 +136,26 @@ export class Tron extends EventEmitter {
   }
 
   /**
+   * Determines if tron api response was successfull
+   *
+   * @private
+   * @param {*} trx
+   * @param {*} trc20
+   * @returns {boolean}
+   * @memberof Tron
+   */
+  private isSuccessful(trx: any, trc20: any): boolean {
+    // Was TRX a valid response
+    if (
+      (trx.success && trx.data.length) ||
+      (trc20.success && trc20.data.length)
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Timer runs through all the wallets fetching transactions
    *
    * @private
@@ -142,7 +165,9 @@ export class Tron extends EventEmitter {
     // Cache next timestamp, At this point we don't know how long the below
     // will take to run and that would create a void in the timestamp check of transaction
     // the downside of this is in that same void we may get multiple transactions but this is negated due to unique txID
-    const cacheTimeStamp = new Date( Date.now() - BACKDATED_POLL * 1000 * 60 ).getTime();
+    const cacheTimeStamp = new Date(
+      Date.now() - BACKDATED_POLL * 1000 * 60
+    ).getTime();
 
     // Use a for so we can await each request
     for (let i = this.wallets.length; i--; ) {
@@ -152,30 +177,40 @@ export class Tron extends EventEmitter {
           `${this.eventHttpWrapper}/accounts/${wallet}/transactions?only_confirmed=true&limit=200&min_timestamp=${this.lastPullBlockTimestamp}`
         );
 
+        const trc20Response = await axios.get(
+          `${this.eventHttpWrapper}/accounts/${wallet}/transactions/trc20?only_confirmed=true&limit=200&min_timestamp=${this.lastPullBlockTimestamp}`
+        );
+
         // Check for success and there are transactions to emit
-        if (transactionResponse.data?.success && transactionResponse.data.data.length) {
+        if (this.isSuccessful(transactionResponse.data, trc20Response.data)) {
           // Lets fetch balance view as well from this new event plugin api
           const balanceResponse = await axios.get(
             `${this.eventHttpWrapper}/accounts/${wallet}/?only_confirmed=true`
           );
 
+          // Create emitted event data 
+          const emit = {
+            address: wallet,
+            transactions: {
+              trx: transactionResponse.data.data,
+              trc20: trc20Response.data.data,
+            },
+            balance: null,
+          } as Transaction;
+
           // check for success response and values not null
-          if (balanceResponse.data?.success && balanceResponse.data.data.length) {            
-            this.emit("transactions", {
-              address: wallet,
-              transactions: transactionResponse.data.data,
-              balance: {
-                trx: balanceResponse.data.data[0].balance,
-                trc20: balanceResponse.data.data[0].trc20,
-              },
-            } as Transaction);
+          if (
+            balanceResponse.data?.success &&
+            balanceResponse.data.data.length
+          ) {
+            emit.balance = {
+              trx: balanceResponse.data.data[0].balance,
+              trc20: balanceResponse.data.data[0].trc20,
+            };
+            this.emit("transactions", emit);
           } else {
             // Emit!
-            this.emit("transactions", {
-              address: wallet,
-              transactions: transactionResponse.data.data,
-              balance: null,
-            } as Transaction);
+            this.emit("transactions", emit);
           }
         }
       }
