@@ -21,7 +21,12 @@ export interface Transaction {
 
 interface AccountBalance {
   trx: number;
-  trc20: unknown[]; // TODO Design this
+  trc20: AccountBalanceTrc20[];
+}
+
+interface AccountBalanceTrc20 {
+  // Contract Address, BigNumber
+  [index: string]: string;
 }
 
 /**
@@ -188,7 +193,7 @@ export class Tron extends EventEmitter {
             `${this.eventHttpWrapper}/accounts/${wallet}/?only_confirmed=true`
           );
 
-          // Create emitted event data 
+          // Create emitted event data
           const emit = {
             address: wallet,
             transactions: {
