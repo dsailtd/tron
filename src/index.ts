@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { Key, entityId, Tronsaction, Trc20saction } from "./key";
 //@ts-ignore
 import * as tronweb from "tronweb";
@@ -42,11 +42,11 @@ export class Tron extends EventEmitter {
   /**
    * Array of addresses to watch for transactions
    *
-   * @private
+   * @public
    * @type {string[]}
    * @memberof Tron
    */
-  private wallets: string[] = [];
+  public wallets: Set<string> = new Set<string>();
 
   /**
    * Tron web object, Used for managing keys and transactions
@@ -117,7 +117,7 @@ export class Tron extends EventEmitter {
    */
   public async getHDAddress(index: entityId): Promise<string> {
     const address = await this.keyManager.getHDAddress(index);
-    this.wallets.push(address);
+    this.wallets.add(address);
     return address;
   }
 
@@ -129,9 +129,11 @@ export class Tron extends EventEmitter {
    */
   public addWallet(wallet: string | string[]): void {
     if (Array.isArray(wallet)) {
-      this.wallets = this.wallets.concat(wallet);
+      for(const w of wallet){
+        this.wallets = this.wallets.add(w);
+      }
     } else {
-      this.wallets.push(wallet);
+      this.wallets.add(wallet);
     }
   }
 
@@ -170,49 +172,74 @@ export class Tron extends EventEmitter {
     ).getTime();
 
     // Use a for so we can await each request
-    for (let i = this.wallets.length; i--; ) {
-      if (this.running) {
-        const wallet = this.wallets[i];
-        const transactionResponse = await axios.get(
+    for (const wallet of this.wallets) {
+      if (!this.running) {
+        continue;
+      }
+      // const wallet = this.wallets[i];
+      let transactionResponse : AxiosResponse<any, any>;
+      try {
+        transactionResponse = await axios.get(
           `${this.eventHttpWrapper}/accounts/${wallet}/transactions?only_confirmed=true&limit=200&min_timestamp=${this.lastPullBlockTimestamp}`
         );
+      } catch (err) {
+        console.log(`ERROR[@${new Date()}]: TRX transaction get response error`)
+        console.log(err)
+        continue;
+      }
 
-        const trc20Response = await axios.get(
+      let trc20Response : AxiosResponse<any, any>;
+      try {
+        trc20Response = await axios.get(
           `${this.eventHttpWrapper}/accounts/${wallet}/transactions/trc20?only_confirmed=true&limit=200&min_timestamp=${this.lastPullBlockTimestamp}`
         );
+      } catch (err) {
+        console.log(`ERROR[@${new Date()}]: TRC20 transaction get response error`)
+        console.log(err)
+        continue;
+      }
 
-        // Check for success and there are transactions to emit
-        if (this.isSuccessful(transactionResponse.data, trc20Response.data)) {
-          // Lets fetch balance view as well from this new event plugin api
-          const balanceResponse = await axios.get(
-            `${this.eventHttpWrapper}/accounts/${wallet}/?only_confirmed=true`
-          );
+      // Check for success and there are transactions to emit
+      if (!this.isSuccessful(transactionResponse.data, trc20Response.data)){
+        // No new data
+        continue;
+      }
 
-          // Create emitted event data 
-          const emit = {
-            address: wallet,
-            transactions: {
-              trx: transactionResponse.data.data,
-              trc20: trc20Response.data.data,
-            },
-            balance: null,
-          } as Transaction;
+      // Lets fetch balance view as well from this new event plugin api
+      let balanceResponse : AxiosResponse<any, any>;
+      try {
+        balanceResponse = await axios.get(
+          `${this.eventHttpWrapper}/accounts/${wallet}/?only_confirmed=true`
+        );
+      } catch (err) {
+        console.log(`ERROR[@${new Date()}]: Balance get response error`)
+        console.log(err)
+        continue;
+      }
 
-          // check for success response and values not null
-          if (
-            balanceResponse.data?.success &&
-            balanceResponse.data.data.length
-          ) {
-            emit.balance = {
-              trx: balanceResponse.data.data[0].balance,
-              trc20: balanceResponse.data.data[0].trc20,
-            };
-            this.emit("transactions", emit);
-          } else {
-            // Emit!
-            this.emit("transactions", emit);
-          }
-        }
+      // Create emitted event data 
+      const emit = {
+        address: wallet,
+        transactions: {
+          trx: transactionResponse.data.data,
+          trc20: trc20Response.data.data,
+        },
+        balance: null,
+      } as Transaction;
+
+      // check for success response and values not null
+      if (
+        balanceResponse.data?.success &&
+        balanceResponse.data.data.length
+      ) {
+        emit.balance = {
+          trx: balanceResponse.data.data[0].balance,
+          trc20: balanceResponse.data.data[0].trc20,
+        };
+        this.emit("transactions", emit);
+      } else {
+        // Emit!
+        this.emit("transactions", emit);
       }
     }
 
