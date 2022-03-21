@@ -12,6 +12,7 @@
     "prepublishOnly": "npm run build"
   },
   "author": "Adam Walker",
+  "contributors": ["Peter Nagymathe"],
   "license": "MIT",
   "devDependencies": {
     "rimraf": "^3.0.2",

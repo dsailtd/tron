@@ -172,7 +172,8 @@ export class Tron extends EventEmitter {
     ).getTime();
 
     // Use a for so we can await each request
-    for (const wallet of this.wallets) {
+    // Originally `wallet of this.wallets` -> Use Array.from due to commonJS compatibility
+    for (const wallet of Array.from(this.wallets)) {
       if (!this.running) {
         continue;
       }
