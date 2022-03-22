@@ -99,6 +99,7 @@ export class Tron extends EventEmitter {
           eventServer: "https://api.trongrid.io",
         });
         this.eventHttpWrapper = "https://api.trongrid.io/v1";
+        break;
       case "shasta":
         this.tronWeb = new tronweb({
           fullNode: "https://api.shasta.trongrid.io",
