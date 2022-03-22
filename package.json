@@ -1,6 +1,6 @@
 {
   "name": "@dsai/tron",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "prepublishOnly": "npm run build"
   },
   "author": "Adam Walker",
+  "contributors": ["Peter Nagymathe"],
   "license": "MIT",
   "devDependencies": {
     "rimraf": "^3.0.2",
